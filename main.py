@@ -1,11 +1,9 @@
 import tkinter
 from tkinter.font import Font
 from PIL import ImageTk, Image
-import csv
 import mysql.connector as sql
 import yfinance
 import pandas as pd
-from io import StringIO
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import mplfinance as mpf
@@ -22,7 +20,7 @@ font1 = Font(family = "Comic Sans MS", size = 10)
 connect = sql.connect(host = "localhost", user = "root", passwd = "", db = "stock")
 cursor = connect.cursor()
 
-stockSeen = dict()
+stockSeen = dict(); companyNameText = str()
 
 def login():
     # Login Page
@@ -224,11 +222,11 @@ def adminHome():
     global userNameText
     photo = tkinter.PhotoImage(file = "Icons/home.png")
     root.iconphoto(False, photo)
-    frame.configure(bg = "#f5ffeb")
     def remove():
         cursor.execute("delete from user where id like '" + userNameText.get() + "'")
         connect.commit()
         adminHome()
+    frame.configure(bg="#f5ffeb")
     backIcon = tkinter.PhotoImage(file = "Icons/back.png")
     tkinter.Button(frame, image = backIcon, height = 40, width = 40, bg = "#f5ffeb", borderwidth = 0, cursor = "hand2", command = login).place(x = 10, y = 10)
     cursor.execute("select * from user")
@@ -255,7 +253,6 @@ def home():
     global personIcon
     photo = tkinter.PhotoImage(file = "Icons/home.png")
     root.iconphoto(False, photo)
-    frame.configure(bg = "#f5ffeb")
     def menu():
         # Menu Bar
         home()
@@ -311,27 +308,8 @@ def home():
             if companyText.get() == "":
                 tkinter.Label(shoppingFrame, text = "Please Enter The Company's Name", bg = "#e6e6e6", fg = "red", font = font1).place(x = 18, y = 150)
             else:
-                dataList = list(); companyNameList = list()
-                fp = open("data.csv", "r")
-                r = csv.reader(fp)
-                for i in r:
-                    dataList.append(i[1])
-                    companyNameList.append(i[0])
-                fp.close()
-                if companyValue.get().upper() in companyNameList:
-                    fp = open("data.csv", "w", newline = "")
-                    w = csv.writer(fp, delimiter = ",")
-                    for i in companyNameList:
-                        if i == companyValue.get().upper():
-                            w.writerow([companyValue.get().upper(), yfinance.download(companyValue.get().upper())])
-                        else:
-                            w.writerow([i, dataList[companyNameList.index(i)]])
-                    fp.close()
-                else:
-                    fp = open("data.csv", "a", newline = "")
-                    w = csv.writer(fp, delimiter = ",")
-                    w.writerow([companyValue.get().upper(), yfinance.download(companyValue.get().upper())])
-                    fp.close()
+                companyNameText = companyValue.get().upper()
+                yfinance.download(companyNameText).to_csv("data.csv", mode = "w")
                 cursor.execute("Select stockList from user where id like '" + userNameValue.get() + "'")
                 x = cursor.fetchall()
                 if x == [(None,)]:
@@ -357,6 +335,7 @@ def home():
         noOfStocksText = tkinter.Entry(shoppingFrame, width = 20, textvariable = noOfStocksValue)
         noOfStocksText.place(x = 105, y = 80)
         tkinter.Button(shoppingFrame, text = "Purchase", bg = "#e6e6e6", font = font1, padx = 6, pady = 1, cursor = "hand2", command = add).place(x = 120, y = 115)
+    frame.configure(bg = "#f5ffeb")
     menuIcon = tkinter.PhotoImage(file = "Icons/menu.png")
     tkinter.Button(frame, image = menuIcon, height = 40, width = 40, bg = "#f5ffeb", borderwidth = 0, cursor = "hand2", command = menu).place(x = 10, y = 10)
     tkinter.Label(frame, text = "Home", bg = "#f5ffeb", font = font).place(x = 270, y = 10)
@@ -378,16 +357,15 @@ def wallet():
     global companyText
     photo = tkinter.PhotoImage(file = "Icons/accountWallet.png")
     root.iconphoto(False, photo)
-    frame.configure(bg="#f5ffeb")
     def remove():
         cursor.execute("Select stockList from user where id like '" + userNameValue.get() + "'")
         a = cursor.fetchall()[0][0]
         x = str()
         if a != "":
             if companyText.get() == "":
-                tkinter.Label(frame, text = "Enter Company Name", fg = "red", font = font1).place(x = 170, y = 370)
+                tkinter.Label(frame, text = "Enter Company Name", bg = "#f5ffeb", fg = "red", font = font1).place(x = 170, y = 370)
             elif companyText.get().upper() not in a:
-                tkinter.Label(frame, text = "Not In Wallet          ", fg = "red", font = font1).place(x = 170, y = 370)
+                tkinter.Label(frame, text = "Not In Wallet          ", bg = "#f5ffeb", fg = "red", font = font1).place(x = 170, y = 370)
             else:
                 b = a.split("\n")
                 b.pop()
@@ -399,7 +377,8 @@ def wallet():
                 connect.commit()
                 wallet()
         else:
-            tkinter.Label(frame, text = "Wallet Is Empty            ", fg = "red", font = font1).place(x = 170, y = 370)
+            tkinter.Label(frame, text = "Wallet Is Empty            ", bg = "#f5ffeb", fg = "red", font = font1).place(x = 170, y = 370)
+    frame.configure(bg="#f5ffeb")
     tkinter.Label(frame, text = "Wallet", bg = "#f5ffeb", font = font).place(x = 270, y = 10)
     backIcon = tkinter.PhotoImage(file = "Icons/back.png")
     tkinter.Button(frame, image = backIcon, height = 40, width = 40, bg = "#f5ffeb", borderwidth = 0, cursor = "hand2", command = home).place(x = 10, y = 10)
@@ -412,7 +391,7 @@ def wallet():
         for i in b:
             j = i.split("\t")
             z = yfinance.Ticker(j[0]).info
-            k = z["currentPrice"] * float(j[1])
+            k = int(z["currentPrice"] * float(j[1]))
             l = z["recommendationKey"]
             x += i + "\t" + str(k) + "\t" + l + "\n"
     tkinter.Label(frame, text = x, bg = "#f5ffeb", font = Font(family = "ComicSans MS", size = 12)).place(x = 150, y = 50)
@@ -452,17 +431,11 @@ def stock():
     tkinter.Label(frame, text = company + " - " + data, bg = "#f5ffeb", font = font).place(x = 270, y = 10)
     stock = yfinance.Ticker(company)
     info = stock.info
-    tkinter.Label(frame, text = "Industry: " + info["industry"] + "; Sector: " + info["sector"] + "; \nCountry: " + info["country"] + "; City: " + info["city"] + "\tRecommendation: " + info["recommendationKey"], bg = "#f5ffeb", font = font1).place(x = 60, y = 40)
-    dataList = list(); companyNameList = list()
-    fp = open("data.csv", "r")
-    r = csv.reader(fp)
-    for i in r:
-        dataList.append(i[1])
-        companyNameList.append(i[0])
-    fp.close()
-    df = stock.history(period = time)
-    if company in companyNameList:
-        df = pd.DataFrame(StringIO(dataList[companyNameList.index(company)]))
+    tkinter.Label(frame, text = "Industry: " + info["industry"] + "; Sector: " + info["sector"] + "; \nCountry: " + info["city"] + "\tRecommendation: " + info["recommendationKey"], bg = "#f5ffeb", font = font1).place(x = 70, y = 40)
+    if company == companyNameText:
+        df = pd.read_csv("data.csv")
+    else:
+        df = stock.history(period = time)
     if data == "OHLC":
         plot = mpf.figure(figsize = (6, 4), dpi = 100)
         subPlot = plot.add_subplot(111, xlabel = "Time", ylabel = "Value")
