@@ -401,7 +401,7 @@ def wallet():
     tkinter.Button(frame, text = "Submit", bg = "#f5ffeb", font = font1, padx = 5, pady = 1, cursor = "hand2", command = remove).place(x = 170, y = 330)
 
 def recents():
-    # Reacents Page
+    # Recents Page
     for widgets in frame.winfo_children():
         widgets.destroy()
     global backIcon
