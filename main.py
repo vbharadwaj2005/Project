@@ -460,7 +460,7 @@ def stock():
     subPlot.set_facecolor("#f5ffeb")
 
 
-# Each Page Is A Seperate Function And The Program Starts With The Login Page
+# Each Page Is A Separate Function And The Program Starts With The Login Page
 
 login()
 
